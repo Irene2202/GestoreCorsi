@@ -11,6 +11,7 @@ import java.util.ResourceBundle;
 
 import it.polito.tdp.corsi.model.Corso;
 import it.polito.tdp.corsi.model.Model;
+import it.polito.tdp.corsi.model.Studente;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -72,9 +73,20 @@ public class FXMLController {
     	}
     	
     	List<Corso> corsi=this.model.getCorsiByPeriodo(periodo);
+    	/*
     	for(Corso c:corsi) {
     		txtRisultato.appendText(c.toString()+"\n");
+    	}*/
+    	
+    	StringBuilder sb=new StringBuilder();
+    	for(Corso c:corsi) {
+    		sb.append(String.format("%-8s ", c.getCodins()));
+    		sb.append(String.format("%-4d ", c.getCrediti()));
+    		sb.append(String.format("%-50s ", c.getNome()));
+    		sb.append(String.format("%-4d\n", c.getPd()));
     	}
+    	
+    	txtRisultato.appendText(sb.toString());
     	
     }
 
@@ -105,18 +117,45 @@ public class FXMLController {
     	for(Corso c:corsiIscrizioni.keySet()) {
     		txtRisultato.appendText(c.toString());
     		Integer n=corsiIscrizioni.get(c);
-    		txtRisultato.appendText("\t"+n+"\n");
+    		txtRisultato.appendText(" "+n+"\n");
     	}
     	
+    }
+    
+    @FXML
+    void stampaStudenti(ActionEvent event) {
+    	txtRisultato.clear();
+    	String codice=txtCorso.getText();
+    	if(!this.model.esisteCorso(codice)) {
+    		txtRisultato.appendText("Il corso non esiste");
+    		return;
+    	}
+    	
+    	List<Studente> studenti=this.model.getStudentiByCorso(codice);
+    	
+    	if(studenti.size()==0) {
+    		txtRisultato.appendText("Il corso non ha iscritti");
+    		return;
+    	}
+    	
+    	for(Studente s:studenti) {
+    		txtRisultato.appendText(s+"\n");
+    	}
     }
 
     @FXML
     void stampaDivisione(ActionEvent event) {
-
-    }
-
-    @FXML
-    void stampaStudenti(ActionEvent event) {
+    	txtRisultato.clear();
+    	String codice=txtCorso.getText();
+    	if(!this.model.esisteCorso(codice)) {
+    		txtRisultato.appendText("Il corso non esiste");
+    		return;
+    	}
+    	
+    	Map<String, Integer> divisione=model.getDivisioneCDS(codice);
+    	for(String cds:divisione.keySet()) {
+    		txtRisultato.appendText(cds+" "+divisione.get(cds)+"\n");
+    	}
 
     }
 
@@ -134,6 +173,7 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	txtRisultato.setStyle("-fx-font-family: monospace");
     }
     
     /*

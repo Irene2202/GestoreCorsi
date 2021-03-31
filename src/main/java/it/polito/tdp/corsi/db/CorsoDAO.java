@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import it.polito.tdp.corsi.model.Corso;
+import it.polito.tdp.corsi.model.Studente;
 
 public class CorsoDAO {
 	
@@ -47,8 +48,7 @@ public class CorsoDAO {
 		String sql="SELECT c.codins, c.nome, c.crediti, c.pd, COUNT(*) AS tot "
 				+"FROM corso c, iscrizione i "
 				+"WHERE c.codins=i.codins AND c.pd=? "
-				+"GROUP BY c.codins, c.nome, c.crediti, c.pd "
-				+"ORDER BY tot "; //?-> andrò a inserire il parametro dato dall'utente
+				+"GROUP BY c.codins, c.nome, c.crediti, c.pd"; //?-> andrò a inserire il parametro dato dall'utente
 		
 		Map<Corso, Integer> result=new HashMap<>();
 		
@@ -73,6 +73,84 @@ public class CorsoDAO {
 		}
 		
 		return result;
+	}
+	
+	public List<Studente> getStudentiByCorso(Corso corso){
+		String sql="SELECT s.matricola, s.cognome, s.nome, s.CDS "
+				+"FROM iscrizione i, studente s "
+				+"WHERE s.matricola=i.matricola AND i.codins=?";
+		
+		List<Studente> result=new ArrayList<>();
+		
+		try {
+			Connection conn=DBConnect.getConnection();
+			PreparedStatement st=conn.prepareStatement(sql);
+			st.setString(1, corso.getCodins());
+			ResultSet rs=st.executeQuery();
+			
+			while(rs.next()) {
+				Studente s=new Studente(rs.getInt("matricola"), rs.getString("cognome"),
+						rs.getString("nome"), rs.getString("CDS"));
+				result.add(s);
+			}
+			
+			rs.close();
+			st.close();
+			conn.close();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		
+		return result;
+	}
+	
+	public Map<String, Integer> getDivisioneStudenti(Corso corso){
+		String sql="SELECT s.CDS, COUNT(*) AS tot "
+				+"FROM studente s, iscrizione i "
+				+"WHERE s.matricola=i.matricola AND i.codins=? AND s.cds<>'' "
+				+"GROUP BY s.CDS";
+		
+		Map<String, Integer> result=new HashMap<>();
+		try {
+			Connection conn=DBConnect.getConnection();
+			PreparedStatement st=conn.prepareStatement(sql);
+			st.setString(1, corso.getCodins());
+			ResultSet rs=st.executeQuery();
+			
+			while(rs.next()) {
+				result.put(rs.getString("CDS"), rs.getInt("tot"));
+			}
+			rs.close();
+			st.close();
+			conn.close();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return result;
+	}
+
+	public boolean esisteCorso(Corso corso) {
+		String sql="SELECT * FROM corso WHERE codins=?";
+		try {
+			Connection conn=DBConnect.getConnection();
+			PreparedStatement st=conn.prepareStatement(sql);
+			st.setString(1, corso.getCodins());
+			ResultSet rs=st.executeQuery();
+			
+			if(rs.next()) {
+				rs.close();
+				st.close();
+				conn.close();
+				return true;
+			} else {
+				rs.close();
+				st.close();
+				conn.close();
+				return false;
+			}
+		} catch(SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 }
